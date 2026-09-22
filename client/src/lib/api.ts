@@ -58,7 +58,7 @@ export const api = {
   deliveries: () => call<Delivery[]>("/deliveries", { auth: "voice" }),
   trends: () => call<Trend[]>("/checks/trends", { auth: "voice" }),
   subscribers: () => call<Subscriber[]>("/subscribers", { auth: "voice" }),
-  draft: (transcript: string, clock?: string) => call<AlertDraft>("/alerts/draft", { json: { transcript, clock }, auth: "voice" }),
+  draft: (transcript: string) => call<AlertDraft>("/alerts/draft", { json: { transcript }, auth: "voice" }),
   publish: (body: Omit<AlertDraft, "grounding" | "engine"> & { transcript: string }) =>
     call<PublishResult>("/alerts", { json: body, auth: "voice" }),
 

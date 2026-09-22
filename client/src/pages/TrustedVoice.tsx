@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { AlertTriangle, ArrowRight, Check, CheckCircle2, Mic, Moon, Send, Sparkles, Square, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, Mic, Send, Sparkles, Square, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { api, ApiError } from "../lib/api";
@@ -13,7 +13,6 @@ import { CardHeader, EngineBadge, KindBadge, PageHeader, Spinner, UrgencyBadge }
 
 export function TrustedVoice() {
   const [transcript, setTranscript] = useState("");
-  const [night, setNight] = useState(false);
   const [draft, setDraft] = useState<AlertDraft | null>(null);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +31,7 @@ export function TrustedVoice() {
     setError(null);
     setPublished(null);
     try {
-      setDraft(await api.draft(transcript, night ? "02:00" : undefined));
+      setDraft(await api.draft(transcript));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not reach MaiGuard. Check your connection.");
     } finally {
@@ -54,16 +53,7 @@ export function TrustedVoice() {
         </PageHeader>
 
         <section className="card" aria-label="Report">
-          <CardHeader
-            title="Report"
-            description="Speak naturally. Order and wording don't matter."
-            right={
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted">
-                <input type="checkbox" checked={night} onChange={(e) => setNight(e.target.checked)} className="accent-[var(--signal)]" />
-                <Moon className="h-3.5 w-3.5" /> Simulate 02:00
-              </label>
-            }
-          />
+          <CardHeader title="Report" description="Speak naturally. Order and wording don't matter." />
           <div className="p-5">
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
             <button
@@ -98,7 +88,7 @@ export function TrustedVoice() {
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted">Examples</span>
             {SAMPLE_REPORTS.map((s) => (
-              <button key={s.label} className="chip" onClick={() => { setTranscript(s.text); if (s.label.includes("02:00")) setNight(true); }}>
+              <button key={s.label} className="chip" onClick={() => setTranscript(s.text)}>
                 {s.label}
               </button>
             ))}

@@ -30,6 +30,7 @@ The AI does four jobs: **structure** the report, **route** it by place, **judge 
 - **Only trusted voices can publish.** Drafting, publishing and the rumour-trend feed need a signed-in trusted voice (phone number + PIN or desk email + password, signed 12-hour session, rate-limited sign-in). Every alert is attributed to whoever is signed in, never to a name the request supplies.
 - **Nothing is published without a human.** The AI only drafts; a person presses Publish.
 - **No invented facts.** Each drafted line must quote the transcript, and the server checks the quote is really there. Lines that can't be traced back are flagged in red.
+- **Night-time restraint.** Between 22:00 and 06:00 (town time), anything that isn't dangerous waits quietly until morning instead of waking the town; real danger still interrupts.
 - **"Safe" needs a source.** A *confirmed* or *contradicted* result must point to a real alert in the verified store. Otherwise it becomes *unverified*.
 - **Outdated rumours get the correction.** A rumour that repeats a superseded alert is answered with the newer one.
 - **Silence isn't an answer.** An unverified result always says what is and isn't known, gives safe guidance, and names who to ask.
@@ -191,7 +192,6 @@ The live demo follows Option B above: the web app on Firebase Hosting, and the A
 2. **Check a rumour**: enter any phone number once, then try the three sample chips to see *confirmed*, *contradicted*, and *nothing verified yet*. On the last one you get Musa's number and a promise to be messaged when there is news.
 3. **Trusted voice**: sign in as Musa, pick *Armed men at Old Bridge*, press **Draft alert**, review the draft, then **Publish**.
 4. The **Delivery** section on the Trusted voice page shows the alert *and* the follow-up reaching your number, and that North Gate numbers got nothing.
-5. Tick **Simulate 02:00** and draft *Repairs tomorrow*: it waits quietly instead of waking the town.
 
 ## Architecture
 
