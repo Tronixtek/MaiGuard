@@ -185,12 +185,15 @@ deploy/  docker-compose.yml, nginx site, deploy.sh
 
 Both paths share a single source of truth, the verified alert store, and only a trusted voice's confirmation writes to it.
 
-## Deliberately left out
+## Left out and next phase
 
-Real SMS (the simulated gateway shows the same routing logic), WhatsApp ingestion (end-to-end encrypted), password reset and verifying that a phone number or email really belongs to the person (both need a real SMS or email provider), multiple languages (the brief doesn't describe a language barrier), and a database (seeded in-memory data makes the demo reliable).
-
-## Next
-
-A real SMS and email provider, with one-time codes to confirm members' numbers and emails and inbound rumour checks by text; deputy and night cover for trusted voices; protecting trusted voices from being targeted; measuring alert fatigue in the field.
+- **Real SMS and email delivery.** The prototype shows who each alert reaches without sending real texts or emails. Next: connect an SMS and email provider, including rumour checks by text message.
+- **Confirming contacts.** Phone numbers and emails aren't verified yet, and there's no password reset. Next: one-time codes by SMS or email.
+- **A real WhatsApp number.** The demo uses Meta's test number, which only replies to registered testers. Next: a real business number anyone can message, plus WhatsApp voice notes from trusted voices.
+- **A database.** Data is seeded and held in memory so the demo is reliable. Next: persistent storage.
+- **Reading WhatsApp groups.** Not possible: groups are end-to-end encrypted and have no API.
+- **Multiple languages.** The brief doesn't describe a language barrier. Next: add them if field use shows the need.
+- **Trusted-voice resilience.** Next: deputy and night cover, and protecting trusted voices from being targeted.
+- **Alert fatigue.** Next: measure in the field how often people are interrupted, and tune the urgency rules.
 
 *The town, people and phone numbers in this prototype are fictional.*
