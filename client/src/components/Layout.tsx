@@ -4,6 +4,7 @@ import { useAuth } from "../lib/auth";
 import { useMember } from "../lib/member";
 import { cx } from "../lib/data";
 import { Logo } from "./ui";
+import { FloatingWhatsApp } from "./FloatingWhatsApp";
 
 const NAV = [
   { to: "/voice", label: "Trusted voice" },
@@ -74,6 +75,7 @@ export function Layout() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <Outlet />
       </main>
+      <FloatingWhatsApp />
     </div>
   );
 }

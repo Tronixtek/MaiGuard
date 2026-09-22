@@ -1,5 +1,6 @@
 import { ArrowRight, BellRing, Check, MessageCircle, Mic, Phone, Search, ShieldQuestion, Smartphone, X } from "lucide-react";
 import { Link } from "react-router";
+import { WHATSAPP_NUMBER, whatsappLink } from "../lib/whatsapp";
 
 const STEPS = [
   {
@@ -22,9 +23,6 @@ const STEPS = [
   },
 ];
 
-/** MaiGuard's WhatsApp number, set at build time (VITE_WHATSAPP_NUMBER). */
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
-const whatsappLink = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}?text=${encodeURIComponent("Hi")}` : undefined;
 
 const DOES = [
   "Structures spoken reports and links every line to the speaker's words",
@@ -151,7 +149,7 @@ function WhatsAppBand() {
 /** Static illustration of the two things a resident sees. */
 function Preview() {
   return (
-    <div className="relative mx-auto w-full max-w-md" aria-hidden>
+    <div className="relative mx-auto w-full max-w-md pb-14 sm:pb-20" aria-hidden>
       <div className="card overflow-hidden">
         <div className="flex items-center gap-3 border-b border-line bg-unverified-soft px-5 py-4">
           <ShieldQuestion className="h-6 w-6 text-unverified" />
@@ -176,7 +174,7 @@ function Preview() {
           </p>
         </div>
       </div>
-      <div className="card absolute -bottom-8 -left-4 hidden w-64 p-3 text-xs shadow-lg sm:block lg:-left-10">
+      <div className="card absolute bottom-0 -left-4 hidden w-64 p-3 text-xs shadow-lg sm:block lg:-left-10">
         <p className="font-semibold text-ink">MaiGuard ALERT · North Gate Road</p>
         <p className="mt-1 text-ink-soft">Armed men were seen near the checkpoint. Avoid North Gate Road after dark.</p>
         <p className="mt-1.5 text-[11px] text-muted">Verified by Grace Adeyemi · 18:02</p>

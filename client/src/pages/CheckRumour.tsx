@@ -248,7 +248,7 @@ function ContactGate() {
         <Link to="/account?mode=signin" className="font-medium text-signal hover:underline">
           sign in
         </Link>
-        .
+        <span className="-ml-1">.</span>
       </div>
     </form>
   );
