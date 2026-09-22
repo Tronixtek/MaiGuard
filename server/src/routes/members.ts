@@ -13,6 +13,7 @@ import {
 } from "../auth.js";
 import { normalizePhone } from "../lib/text.js";
 import { maskedView, messagesFor, selfView } from "../services/members.js";
+import { sendEmail } from "../services/email.js";
 
 /**
  * Community members. Anyone can check a rumour after leaving a phone number
@@ -81,6 +82,16 @@ members.post("/signup", (req, res) => {
     sub = existing;
   } else {
     sub = store.addSubscriber({ phone: body.phone, email: body.email, areaIds, passwordHash: hashPassword(body.password) });
+  }
+  if (sub.email) {
+    const roads = sub.areaIds.map((id) => store.area(id)?.name ?? id);
+    void sendEmail(
+      sub.email,
+      "Welcome to MaiGuard",
+      roads.length
+        ? `You'll get verified alerts for ${roads.join(", ")} at this address as soon as a trusted voice publishes them.`
+        : "You're signed up. Choose the roads you want alerts for in your account, and you'll get verified alerts at this address.",
+    );
   }
   res.status(201).json({ ...session(sub.id, "member"), member: selfView(sub) });
 });

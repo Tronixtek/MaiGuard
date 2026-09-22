@@ -2,6 +2,7 @@ import { store } from "../store.js";
 import { clockTime } from "../lib/text.js";
 import type { Alert, AlertKind, Delivery, Subscriber } from "../types.js";
 import { sendWhatsAppText } from "./whatsapp.js";
+import { sendEmail } from "./email.js";
 
 const KIND_LABEL: Record<AlertKind, string> = { danger: "ALERT", advisory: "NOTICE", all_clear: "ALL CLEAR" };
 
@@ -14,12 +15,17 @@ export function smsBody(alert: Alert): string {
 }
 
 /**
- * Send one message to every channel a member has given us. SMS and email are
- * simulated in this prototype; WhatsApp is sent for real when it is configured.
+ * Send one message to every channel a member has given us. SMS is simulated in
+ * this prototype; email (SMTP) and WhatsApp are sent for real when configured.
  */
 function deliverTo(sub: Subscriber, msg: Pick<Delivery, "body" | "kind" | "urgency" | "alertId">) {
   if (sub.phone) store.addDelivery({ ...msg, subscriberId: sub.id, channel: "sms", to: sub.phone });
-  if (sub.email) store.addDelivery({ ...msg, subscriberId: sub.id, channel: "email", to: sub.email });
+  if (sub.email) {
+    store.addDelivery({ ...msg, subscriberId: sub.id, channel: "email", to: sub.email });
+    // The first line of the message ("MaiGuard ALERT · Old Bridge Road") doubles as the subject.
+    const [subject = "MaiGuard alert", ...rest] = msg.body.split("\n");
+    void sendEmail(sub.email, subject.replace(/:$/, ""), rest.join("\n"));
+  }
   if (sub.whatsapp) {
     store.addDelivery({ ...msg, subscriberId: sub.id, channel: "whatsapp", to: `+${sub.whatsapp}` });
     void sendWhatsAppText(sub.whatsapp, msg.body);

@@ -76,6 +76,8 @@ Everything is optional. The server reads `.env` from the repo root (or `server/.
 | `DESK_PASSWORD_HASH` | Enables the coordinator desk's email sign-in. Create it with `npm run hash-password -- "your password"` and paste the output. `DESK_EMAIL` changes the email (default `trustedvoice@local.com`). |
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN` | Turn on WhatsApp. See [step 6](#6-optional-whatsapp). |
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_API_VERSION` | Optional. The app secret verifies Meta's signature on each webhook; version defaults to `v25.0`. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Send email alerts for real. See [step 7](#7-optional-email-alerts-smtp). |
+| `PUBLIC_APP_URL` | The web app's address, used for the "change your roads" link in emails. |
 | `CORS_ORIGINS` | Comma-separated web origins allowed to call the API when the web app is hosted separately, e.g. `https://your-app.web.app`. |
 | `MAIGUARD_DATA_DIR` | Folder where member contacts and accounts are saved so they survive restarts (set to `/app/data` in Docker). Unset: kept in memory only. |
 | `TOWN_TZ` | Town clock for SMS times and night-time urgency (default `Africa/Lagos`). |
@@ -144,6 +146,27 @@ Residents forward rumours to your WhatsApp number and get answers in the chat. T
 
 Meta's free **test number** only replies to up to 5 numbers you verify in the dashboard. To let anyone chat, add a real number under **Production setup → Add phone number** (a SIM not already registered on WhatsApp).
 
+### 7. Optional: email alerts (SMTP)
+
+Members who give an email get a welcome email and every alert for their roads by email. Any SMTP provider works; without SMTP settings, email alerts only appear in the delivery log.
+
+1. Get SMTP details from a provider, for example:
+   - **Gmail / Google Workspace:** host `smtp.gmail.com`, port `587`, your address as the user, and an [app password](https://myaccount.google.com/apppasswords) (needs 2-step verification).
+   - **Brevo, Mailgun, SendGrid, Amazon SES, Zoho:** create SMTP credentials in their dashboard. Better for volume and deliverability; verify your sending domain there.
+2. Add them to the server's `.env`:
+   ```bash
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587                  # 465 uses TLS from the start (SMTP_SECURE=true is implied)
+   SMTP_USER=alerts@example.com
+   SMTP_PASS=your-app-password
+   SMTP_FROM="MaiGuard <alerts@example.com>"
+   PUBLIC_APP_URL=https://your-app.web.app
+   ```
+3. Restart the API. The log shows `[email] SMTP ready` or the reason it failed.
+4. Test it: create an account with your email and pick a road. You should get the welcome email; publish an alert for that road and it arrives too.
+
+Don't run your own mail server on the VPS for this: mail from a new server IP usually lands in spam. Use a provider's SMTP.
+
 ## Demo sign-in
 
 All accounts are fictional.
@@ -188,8 +211,7 @@ Both paths share a single source of truth, the verified alert store, and only a 
 
 ## Left out and next phase
 
-- **Real SMS and email delivery.** The prototype shows who each alert reaches without sending real texts or emails. Next: connect an SMS and email provider, including rumour checks by text message.
-- **Confirming contacts.** Phone numbers and emails aren't verified yet, and there's no password reset. Next: one-time codes by SMS or email.
+- **Real SMS delivery.** Email and WhatsApp messages are sent for real; text messages are shown in the delivery log but not sent. Next: connect an SMS provider, including rumour checks by text message.
 - **A real WhatsApp number.** The demo uses Meta's test number, which only replies to registered testers. Next: a real business number anyone can message, plus WhatsApp voice notes from trusted voices.
 - **A database.** Member contacts and accounts are saved to a file; alerts and rumour checks are held in memory and reset to the demo seed on restart. Next: a proper database for everything.
 - **Local languages.** Alerts and rumour checks are in English only. Next: Hausa, Yoruba, Igbo and Pidgin, so reports can be spoken, and alerts and answers read, in the language people use every day.

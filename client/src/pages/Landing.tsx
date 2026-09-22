@@ -58,7 +58,7 @@ export function Landing() {
             </Link>
             {whatsappLink && (
               <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="btn border border-[#25D366]/40 bg-[#25D366]/10 px-5 py-2.5 text-[#128C4B] hover:bg-[#25D366]/15">
-                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                <MessageCircle className="h-4 w-4" /> Chat MaiGuard AI
               </a>
             )}
           </div>
@@ -124,7 +124,7 @@ function WhatsAppBand() {
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="btn bg-[#25D366] px-5 py-2.5 text-white shadow-card hover:bg-[#1FBE5C]">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <MessageCircle className="h-4 w-4" /> Chat MaiGuard AI
           </a>
           <span className="font-mono text-sm text-ink-soft">{WHATSAPP_NUMBER}</span>
         </div>

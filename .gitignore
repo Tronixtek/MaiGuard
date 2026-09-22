@@ -8,3 +8,7 @@ screening_challenge.pdf
 firebase-debug.log
 deploy/deploy.env
 .firebaserc
+
+# Local env overrides (never commit)
+.env.local
+*.local
