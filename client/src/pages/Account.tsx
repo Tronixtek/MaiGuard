@@ -1,7 +1,7 @@
 import { AnimatePresence } from "motion/react";
 import { Check, LogIn, LogOut, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { api, ApiError } from "../lib/api";
 import { cx, useData } from "../lib/data";
 import { useMember } from "../lib/member";
@@ -50,6 +50,12 @@ function SignUpOrIn() {
         ))}
       </div>
       {mode === "signup" ? <SignUpForm /> : <SignInForm />}
+      <p className="mt-4 text-center text-xs text-muted">
+        Are you a trusted voice?{" "}
+        <Link to="/voice" className="font-medium text-signal hover:underline">
+          Sign in to publish alerts
+        </Link>
+      </p>
     </div>
   );
 }

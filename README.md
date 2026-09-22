@@ -77,6 +77,7 @@ Everything is optional. The server reads `.env` from the repo root (or `server/.
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN` | Turn on WhatsApp. See [step 6](#6-optional-whatsapp). |
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_API_VERSION` | Optional. The app secret verifies Meta's signature on each webhook; version defaults to `v25.0`. |
 | `CORS_ORIGINS` | Comma-separated web origins allowed to call the API when the web app is hosted separately, e.g. `https://your-app.web.app`. |
+| `MAIGUARD_DATA_DIR` | Folder where member contacts and accounts are saved so they survive restarts (set to `/app/data` in Docker). Unset: kept in memory only. |
 | `TOWN_TZ` | Town clock for SMS times and night-time urgency (default `Africa/Lagos`). |
 | `PORT` | API port (default `8787`). |
 
@@ -94,7 +95,7 @@ The demo town is seeded data, not a database. To adapt it to a real place:
 - **Roads and areas, trusted voices, and subscribers:** edit `server/src/data/seed.ts`. Each area has a name, the other names people use for it (landmarks, junctions), and the trusted voice responsible for it.
 - **Trusted-voice PINs:** edit `DEMO_PINS` in `server/src/auth.ts`. **Change them before any real use**: the demo PINs are public in this README.
 - **Desk password:** set `DESK_PASSWORD_HASH` (step 3). The password itself never goes in the repo.
-- Data lives in memory: restarting the server resets it to the seed. For real use, back `server/src/store.ts` with a database.
+- Member contacts and accounts are saved to `$MAIGUARD_DATA_DIR/subscribers.json` when that variable is set (the Docker image sets it and `deploy/docker-compose.yml` keeps it on a volume). Alerts and rumour checks stay in memory and reset to the seed on restart. For real use, back `server/src/store.ts` with a database.
 
 ### 5. Deploy
 
@@ -159,7 +160,7 @@ There is also a coordinator desk account, **MaiGuard Desk**, that can publish fo
 
 ## Live deployment
 
-The live demo follows Option B above: the web app on Firebase Hosting, and the API in Docker behind nginx with HTTPS on a separate server. Secrets live only in the server's `.env`. Redeploying the API resets the demo data.
+The live demo follows Option B above: the web app on Firebase Hosting, and the API in Docker behind nginx with HTTPS on a separate server. Secrets live only in the server's `.env`. Member accounts are kept across redeploys; alerts and rumour checks reset to the demo seed.
 
 ## A two-minute demo
 
@@ -190,10 +191,7 @@ Both paths share a single source of truth, the verified alert store, and only a 
 - **Real SMS and email delivery.** The prototype shows who each alert reaches without sending real texts or emails. Next: connect an SMS and email provider, including rumour checks by text message.
 - **Confirming contacts.** Phone numbers and emails aren't verified yet, and there's no password reset. Next: one-time codes by SMS or email.
 - **A real WhatsApp number.** The demo uses Meta's test number, which only replies to registered testers. Next: a real business number anyone can message, plus WhatsApp voice notes from trusted voices.
-- **A database.** Data is seeded and held in memory so the demo is reliable. Next: persistent storage.
-- **Reading WhatsApp groups.** Not possible: groups are end-to-end encrypted and have no API.
-- **Multiple languages.** The brief doesn't describe a language barrier. Next: add them if field use shows the need.
-- **Trusted-voice resilience.** Next: deputy and night cover, and protecting trusted voices from being targeted.
-- **Alert fatigue.** Next: measure in the field how often people are interrupted, and tune the urgency rules.
+- **A database.** Member contacts and accounts are saved to a file; alerts and rumour checks are held in memory and reset to the demo seed on restart. Next: a proper database for everything.
+- **Local languages.** Alerts and rumour checks are in English only. Next: Hausa, Yoruba, Igbo and Pidgin, so reports can be spoken, and alerts and answers read, in the language people use every day.
 
 *The town, people and phone numbers in this prototype are fictional.*

@@ -1,5 +1,6 @@
 import { Lock, LogIn } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Logo, Spinner } from "../components/ui";
@@ -92,6 +93,12 @@ function SignIn() {
 
       <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted">
         <Lock className="h-3.5 w-3.5" /> Access is issued by your community coordinator.
+      </p>
+      <p className="mt-2 text-center text-xs text-muted">
+        Community member?{" "}
+        <Link to="/account?mode=signin" className="font-medium text-signal hover:underline">
+          Sign in to your account
+        </Link>
       </p>
     </div>
   );
