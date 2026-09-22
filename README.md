@@ -186,13 +186,6 @@ There is also a coordinator desk account, **MaiGuard Desk**, that can publish fo
 
 The live demo follows Option B above: the web app on Firebase Hosting, and the API in Docker behind nginx with HTTPS on a separate server. Secrets live only in the server's `.env`. Member accounts are kept across redeploys; alerts and rumour checks reset to the demo seed.
 
-## A two-minute demo
-
-1. Start from the seeded data (restart the server).
-2. **Check a rumour**: enter any phone number once, then try the three sample chips to see *confirmed*, *contradicted*, and *nothing verified yet*. On the last one you get Musa's number and a promise to be messaged when there is news.
-3. **Trusted voice**: sign in as Musa, pick *Armed men at Old Bridge*, press **Draft alert**, review the draft, then **Publish**.
-4. The **Delivery** section on the Trusted voice page shows the alert *and* the follow-up reaching your number, and that North Gate numbers got nothing.
-
 ## Architecture
 
 ```
