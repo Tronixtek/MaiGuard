@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.DS_Store
+*.log
+screening_challenge.pdf
+.firebase
+firebase-debug.log
+deploy/deploy.env
+.firebaserc

@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Light only: white surfaces on a near-white page, a neutral
+ * slate scale, one brand blue, and three outcome colours.
+ */
+:root {
+  --paper: #ffffff;
+  --surface: #ffffff;
+  --sunken: #f6f7f9;
+  --ink: #0f172a;
+  --ink-soft: #334155;
+  --muted: #64748b;
+  --line: #e5e7eb;
+  --line-strong: #cbd5e1;
+  --signal: #2563eb;
+  --signal-hover: #1d4ed8;
+  --signal-soft: #eff4ff;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --confirmed: #15803d;
+  --confirmed-soft: #f0fdf4;
+  --unverified: #475569;
+  --unverified-soft: #f1f5f9;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.05);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-signal: var(--signal);
+  --color-signal-hover: var(--signal-hover);
+  --color-signal-soft: var(--signal-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-confirmed: var(--confirmed);
+  --color-confirmed-soft: var(--confirmed-soft);
+  --color-unverified: var(--unverified);
+  --color-unverified-soft: var(--unverified-soft);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --shadow-card: var(--shadow);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--sunken);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: #dbe6ff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+}
+
+@utility card {
+  @apply rounded-xl border border-line bg-surface shadow-card;
+}
+@utility eyebrow {
+  @apply text-[13px] font-medium text-muted;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-signal text-white shadow-card hover:bg-signal-hover;
+}
+@utility btn-ghost {
+  @apply btn border border-line bg-surface text-ink-soft shadow-card hover:bg-sunken hover:text-ink;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft transition hover:border-line-strong hover:text-ink;
+}
+@utility field {
+  @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-card placeholder:text-muted/70 transition focus:border-signal focus:ring-3 focus:ring-signal/15 focus:outline-none;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

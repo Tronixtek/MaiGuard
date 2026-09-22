@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+client/*
+!client/package.json
+.env
+.env.*
+!.env.example
+.git
+*.pdf

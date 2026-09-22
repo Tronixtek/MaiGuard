@@ -1,0 +1,4 @@
+{
+  "projects": { "default": "your-firebase-project" },
+  "targets": { "your-firebase-project": { "hosting": { "maiguard": ["your-site-id"] } } }
+}

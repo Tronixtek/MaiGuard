@@ -1,0 +1,10 @@
+# Runs on the server from DEPLOY_DIR (e.g. /opt/maiguard). Bound to localhost; nginx terminates TLS in front.
+services:
+  api:
+    build: ./src
+    image: maiguard-api
+    container_name: maiguard-api
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8787:8787"
