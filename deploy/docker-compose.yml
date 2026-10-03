@@ -12,5 +12,5 @@ services:
       - data:/app/data
 
 volumes:
-  # Community members' contacts and accounts, kept across redeploys.
+  # SQLite database, kept across redeploys.
   data:

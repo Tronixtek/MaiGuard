@@ -80,7 +80,7 @@ Everything is optional. The server reads `.env` from the repo root (or `server/.
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Send email alerts for real. See [step 7](#7-optional-email-alerts-smtp). |
 | `PUBLIC_APP_URL` | The web app's address, used for the "change your roads" link in emails. |
 | `CORS_ORIGINS` | Comma-separated web origins allowed to call the API when the web app is hosted separately, e.g. `https://your-app.web.app`. |
-| `MAIGUARD_DATA_DIR` | Folder where member contacts and accounts are saved so they survive restarts (set to `/app/data` in Docker). Unset: kept in memory only. |
+| `MAIGUARD_DB` | SQLite file; everything (alerts, members, checks, deliveries) survives restarts. Unset: kept in memory only. The Docker image uses `/app/data/maiguard.db` on a volume. |
 | `TOWN_TZ` | Town clock for SMS times and night-time urgency (default `Africa/Lagos`). |
 | `PORT` | API port (default `8787`). |
 
@@ -98,7 +98,7 @@ The demo town is seeded data, not a database. To adapt it to a real place:
 - **Roads and areas, trusted voices, and subscribers:** edit `server/src/data/seed.ts`. Each area has a name, the other names people use for it (landmarks, junctions), and the trusted voice responsible for it.
 - **Trusted-voice PINs:** edit `DEMO_PINS` in `server/src/auth.ts`. **Change them before any real use**: the demo PINs are public in this README.
 - **Desk password:** set `DESK_PASSWORD_HASH` (step 3). The password itself never goes in the repo.
-- Member contacts and accounts are saved to `$MAIGUARD_DATA_DIR/subscribers.json` when that variable is set (the Docker image sets it and `deploy/docker-compose.yml` keeps it on a volume). Alerts and rumour checks stay in memory and reset to the seed on restart. For real use, back `server/src/store.ts` with a database.
+- With `MAIGUARD_DB` set, everything is stored in SQLite (the Docker image uses a file on a volume). Without it, the store is in memory and resets to the seed on restart. `POST /api/demo/reset` (trusted voice) restores the seeded alerts and clears checks and deliveries, but keeps members.
 
 ### 5. Deploy
 
@@ -184,7 +184,7 @@ There is also a coordinator desk account, **MaiGuard Desk**, that can publish fo
 
 ## Live deployment
 
-The live demo follows Option B above: the web app on Firebase Hosting, and the API in Docker behind nginx with HTTPS on a separate server. Secrets live only in the server's `.env`. Member accounts are kept across redeploys; alerts and rumour checks reset to the demo seed.
+The live demo follows Option B above: the web app on Firebase Hosting, and the API in Docker behind nginx with HTTPS on a separate server. Secrets live only in the server's `.env`, and the SQLite database sits on a Docker volume, so everything survives redeploys.
 
 ## Architecture
 
@@ -194,7 +194,8 @@ server/  Express + TypeScript
   src/services/      broadcast + follow-ups, 3-outcome response builder, check trends
   src/routes/        REST API, member accounts, WhatsApp webhook, Server-Sent Events (/api/stream)
   src/auth.ts        trusted-voice PINs, member passwords, signed sessions
-  src/store.ts       in-memory verified alert store, seeded on start and on reset
+  src/store.ts       verified alert store, seeded on first run
+  src/db.ts          SQLite persistence (optional; in memory without MAIGUARD_DB)
 client/  React 19 + Vite + Tailwind 4 + Motion
   src/pages/         Landing, TrustedVoice (with Delivery), CheckRumour, Account, SignIn
 deploy/  docker-compose.yml, nginx site, deploy.sh
@@ -206,7 +207,7 @@ Both paths share a single source of truth, the verified alert store, and only a 
 
 - **Real SMS delivery.** Email and WhatsApp messages are sent for real; text messages are shown in the delivery log but not sent. Next: connect an SMS provider, including rumour checks by text message.
 - **A real WhatsApp number.** The demo uses Meta's test number, which only replies to registered testers. Next: a real business number anyone can message, plus WhatsApp voice notes from trusted voices.
-- **A database.** Member contacts and accounts are saved to a file; alerts and rumour checks are held in memory and reset to the demo seed on restart. Next: a proper database for everything.
+- **Scaling the database.** SQLite holds everything on one server, which suits a town. Next: PostgreSQL if MaiGuard ever runs across several servers.
 - **Local languages.** Alerts and rumour checks are in English only. Next: Hausa, Yoruba, Igbo and Pidgin, so reports can be spoken, and alerts and answers read, in the language people use every day.
 
 *The town, people and phone numbers in this prototype are fictional.*

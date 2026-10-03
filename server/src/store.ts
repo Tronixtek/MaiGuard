@@ -1,9 +1,8 @@
 import { EventEmitter } from "node:events";
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { areas, seedAlerts, seedSubscribers, trustedVoices } from "./data/seed.js";
 import { normalizeEmail, normalizePhone } from "./lib/text.js";
+import { dbEnabled, load as loadDb, save as saveDb } from "./db.js";
 import type { Alert, Area, Check, Delivery, FollowUp, Subscriber, TrustedVoice } from "./types.js";
 
 export type StoreEvent =
@@ -12,36 +11,6 @@ export type StoreEvent =
   | { type: "check"; check: Check }
   | { type: "subscriber" }
   | { type: "reset" };
-
-/**
- * Community members (contacts and accounts) are saved to disk when
- * MAIGUARD_DATA_DIR is set, so sign-ups survive restarts and redeploys.
- * Alerts, checks and deliveries stay in memory and reset to the demo seed.
- */
-const DATA_DIR = process.env.MAIGUARD_DATA_DIR;
-const SUBSCRIBERS_FILE = DATA_DIR ? path.join(DATA_DIR, "subscribers.json") : undefined;
-
-function loadSubscribers(): Subscriber[] | undefined {
-  if (!SUBSCRIBERS_FILE || !fs.existsSync(SUBSCRIBERS_FILE)) return undefined;
-  try {
-    return JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, "utf8")) as Subscriber[];
-  } catch (err) {
-    console.error(`[store] could not read ${SUBSCRIBERS_FILE}: ${(err as Error).message}`);
-    return undefined;
-  }
-}
-
-function saveSubscribers(subscribers: Subscriber[]) {
-  if (!SUBSCRIBERS_FILE) return;
-  try {
-    fs.mkdirSync(path.dirname(SUBSCRIBERS_FILE), { recursive: true });
-    const tmp = `${SUBSCRIBERS_FILE}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(subscribers), { mode: 0o600 });
-    fs.renameSync(tmp, SUBSCRIBERS_FILE);
-  } catch (err) {
-    console.error(`[store] could not save subscribers: ${(err as Error).message}`);
-  }
-}
 
 /**
  * The verified alert list is the single source of truth: only `publishAlert`
@@ -55,22 +24,46 @@ class Store {
   followUps: FollowUp[] = [];
   subscribers: Subscriber[] = [];
 
+  private saveTimer?: NodeJS.Timeout;
+
   constructor() {
     this.events.setMaxListeners(100);
-    this.reset();
-    // Save contacts and accounts whenever they change.
-    this.events.on("event", (e: StoreEvent) => {
-      if (e.type === "subscriber") saveSubscribers(this.subscribers);
-    });
+    const saved = loadDb();
+    if (saved) {
+      Object.assign(this, saved);
+    } else {
+      this.reset();
+    }
+    // Mirror every change to the database, batched so a burst of deliveries writes once.
+    this.events.on("event", () => this.schedulePersist());
   }
 
+  /**
+   * Back to the demo data. Members keep their contacts and accounts when a
+   * database is in use; without one, everything returns to the seed.
+   */
   reset() {
     this.alerts = seedAlerts();
-    this.subscribers = loadSubscribers() ?? seedSubscribers();
+    this.subscribers = dbEnabled() && this.subscribers.length > 0 ? this.subscribers : seedSubscribers();
     this.deliveries = [];
     this.checks = [];
     this.followUps = [];
     this.emit({ type: "reset" });
+  }
+
+  private schedulePersist() {
+    if (!dbEnabled() || this.saveTimer) return;
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = undefined;
+      this.persist();
+    }, 200);
+    this.saveTimer.unref?.();
+  }
+
+  /** Write the current state now, e.g. in tests or before shutting down. */
+  persist() {
+    const { alerts, subscribers, deliveries, checks, followUps } = this;
+    saveDb({ alerts, subscribers, deliveries, checks, followUps });
   }
 
   emit(event: StoreEvent) {
