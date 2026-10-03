@@ -9,7 +9,7 @@ import type { AlertDraft, AlertKind, Grounding, PublishResult, Urgency } from ".
 import { useSpeech } from "../lib/useSpeech";
 import { useAuth } from "../lib/auth";
 import { DeliveryPanel } from "../components/DeliveryPanel";
-import { CardHeader, EngineBadge, KindBadge, PageHeader, Spinner, UrgencyBadge } from "../components/ui";
+import { CardHeader, EngineBadge, KindBadge, PageHeader, Pill, Spinner, UrgencyBadge } from "../components/ui";
 
 export function TrustedVoice() {
   const [transcript, setTranscript] = useState("");
@@ -155,6 +155,7 @@ function DraftEditor({ draft, transcript, onPublished }: { draft: AlertDraft; tr
 
   const recipients = subscribers.filter((s) => s.areaIds.some((id) => d.areaIds.includes(id))).length;
   const { voice } = useAuth();
+  const language = meta?.languages.find((l) => l.code === d.language);
   const ungrounded = (["what", "where", "action"] as const).filter((k) => !edited[k] && !d.grounding[k].grounded);
 
   const publish = async () => {
@@ -171,7 +172,16 @@ function DraftEditor({ draft, transcript, onPublished }: { draft: AlertDraft; tr
 
   return (
     <section className="card overflow-hidden" aria-label="Review alert">
-      <CardHeader title="Review alert" description="Check each line against what you said, then publish." right={<EngineBadge engine={d.engine} />} />
+      <CardHeader
+        title="Review alert"
+        description="Check each line against what you said, then publish."
+        right={
+          <div className="flex items-center gap-1.5">
+            {language && language.code !== "en" && <Pill className="bg-sunken text-ink-soft ring-line">{language.label}</Pill>}
+            <EngineBadge engine={d.engine} />
+          </div>
+        }
+      />
 
       <div className="space-y-5 p-5">
         <Field label="What happened" value={d.what} onChange={(v) => set("what", v)} grounding={d.grounding.what} edited={edited.what} multiline />

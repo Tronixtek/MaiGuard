@@ -2,6 +2,7 @@ import { z } from "zod";
 import { withFallback } from "./client.js";
 import { store } from "../store.js";
 import { findAreas, isGrounded, sentences, tidySentence, townClock } from "../lib/text.js";
+import { isLanguage, LANGUAGE_CODES, type Language } from "../lib/languages.js";
 import type { AlertDraft, AlertKind, Urgency } from "../types.js";
 
 const DraftSchema = z.object({
@@ -15,6 +16,7 @@ const DraftSchema = z.object({
   area_ids: z.array(z.string()).describe("Ids from the area directory that this alert affects."),
   urgency: z.enum(["interrupt", "available"]),
   urgency_reason: z.string().describe("One short sentence explaining the urgency decision."),
+  language: z.enum(LANGUAGE_CODES).describe("The language the speaker used: en, ha (Hausa), pcm (Nigerian Pidgin), yo (Yoruba) or ig (Igbo)."),
 });
 
 type RawDraft = z.infer<typeof DraftSchema>;
@@ -29,6 +31,7 @@ You are an amplifier, not an authority. The trusted voice is the only source of 
 - Never call a place "safe" unless the speaker used that word. "Calm", "open" or "they have left" are not the same claim; keep the speaker's own words.
 - Every *_quote field must be copied word for word from the transcript so it can be checked automatically.
 - Write for someone reading a basic phone in a hurry: short, plain sentences, no jargon.
+- Write the alert in the same language the speaker used, and report that language. It is translated for everyone else afterwards.
 
 Routing: choose area_ids only from the area directory. Include an area only if the report is about that place. Do not add neighbouring areas "to be safe"; a warning about one road should not alarm the whole town. A place named only as a detour ("use Riverside Way instead") is not affected.
 
@@ -92,6 +95,7 @@ export function finalizeDraft(raw: RawDraft, transcript: string, isNight: boolea
     areaIds,
     urgency,
     urgencyReason,
+    language: isLanguage(raw.language) ? raw.language : "en",
     grounding: {
       what: { quote: raw.what_quote, grounded: isGrounded(raw.what_quote, transcript) },
       where: { quote: raw.where_quote, grounded: isGrounded(raw.where_quote, transcript) },
@@ -149,5 +153,6 @@ export function heuristicDraft(transcript: string, isNight: boolean): RawDraft {
     area_ids: areaIds,
     urgency,
     urgency_reason: reason,
+    language: "en",
   };
 }

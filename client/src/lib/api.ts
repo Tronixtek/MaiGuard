@@ -64,11 +64,12 @@ export const api = {
 
   // Community member
   memberContact: (phone: string) => call<Session<{ member: Member }>>("/members/contact", { json: { phone } }),
-  memberSignup: (body: { phone?: string; email?: string; password: string; areaIds: string[] }) =>
+  memberSignup: (body: { phone?: string; email?: string; password: string; areaIds: string[]; language: string }) =>
     call<Session<{ member: Member }>>("/members/signup", { json: body }),
   memberLogin: (identifier: string, password: string) => call<Session<{ member: Member }>>("/members/login", { json: { identifier, password } }),
   memberMe: () => call<{ member: Member }>("/members/me", { auth: "member" }),
-  memberSetAreas: (areaIds: string[]) => call<{ member: Member }>("/members/me/areas", { method: "PUT", json: { areaIds }, auth: "member" }),
+  memberSetAreas: (areaIds: string[], language?: string) =>
+    call<{ member: Member }>("/members/me/areas", { method: "PUT", json: { areaIds, language }, auth: "member" }),
   memberMessages: () => call<Delivery[]>("/members/me/messages", { auth: "member" }),
   check: (text: string) => call<CheckResponse>("/checks", { json: { text }, auth: "member" }),
 };

@@ -17,6 +17,7 @@ MaiGuard treats this as a **distribution problem, not a knowledge problem**. A p
 | **Trusted voice** (`/voice`) | Speak (or type) a messy report. The AI structures it into *what / where / what to do*, ties every line to the speaker's own words, picks the affected roads, and decides whether it should interrupt people or wait quietly. The person reviews it, then publishes. The **Delivery** log below shows who each alert reached (by SMS, email and WhatsApp) and any follow-ups kept; only people linked to the affected roads get it. |
 | **Check a rumour** (`/check`) | Paste, type or speak a forward and get one of three honest answers: **confirmed**, **contradicted**, or **nothing verified yet**. In the last case it names the trusted person for that road and promises to message you when there's news, then keeps that promise. |
 | **WhatsApp** | Forward a rumour to MaiGuard's WhatsApp number and get the same honest answer in the chat. The follow-up promise is kept there too, and the WhatsApp number becomes the contact, with no sign-up. Uses Meta's official WhatsApp Business Platform (Cloud API); reading WhatsApp groups remains impossible and out of scope. |
+| **Local languages** | Alerts and answers travel in English, Hausa, Nigerian Pidgin, Yoruba and Igbo. A trusted voice speaks in their own language; the alert is translated when published and each member gets it in the language they chose. A rumour sent on WhatsApp in any of these is answered in that language. |
 | **Account** (`/account`) | Optional. Sign up with a phone number and/or email and a password, choose the roads you want alerts for, and see the messages you've received. |
 
 **Who can do what.** Anyone can check a rumour: the first time, they leave a phone number (once per device, no name, no password). That's how MaiGuard builds its contact list, and each road someone asks about is added to their alerts. Members can optionally create an account (phone and/or email + password) to manage their roads from any device and get alerts by email too. Publishing is only for trusted voices, who sign in with a phone number and PIN (or, for the coordinator desk, an email and password). MaiGuard stores no names for community members, and trusted voices only ever see members' contacts masked (`+234 ••• ••• 0101`, `a•••@example.com`).
@@ -78,6 +79,7 @@ Everything is optional. The server reads `.env` from the repo root (or `server/.
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN` | Turn on WhatsApp. See [step 6](#6-optional-whatsapp). |
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_API_VERSION` | Optional. The app secret verifies Meta's signature on each webhook; version defaults to `v25.0`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Send email alerts for real. See [step 7](#7-optional-email-alerts-smtp). |
+| `SMS_PROVIDER`, `SMS_API_KEY`, `SMS_SENDER` | Send text messages for real. See [step 8](#8-optional-text-messages-sms). |
 | `PUBLIC_APP_URL` | The web app's address, used for the "change your roads" link in emails. |
 | `CORS_ORIGINS` | Comma-separated web origins allowed to call the API when the web app is hosted separately, e.g. `https://your-app.web.app`. |
 | `MAIGUARD_DB` | SQLite file; everything (alerts, members, checks, deliveries) survives restarts. Unset: kept in memory only. The Docker image uses `/app/data/maiguard.db` on a volume. |
@@ -168,6 +170,27 @@ Members who give an email get a welcome email and every alert for their roads by
 
 Don't run your own mail server on the VPS for this: mail from a new server IP usually lands in spam. Use a provider's SMTP.
 
+### 8. Optional: text messages (SMS)
+
+Members with a phone number get alerts by SMS once a provider is set. Without one, texts appear in the delivery log but are not sent.
+
+1. Create an account with a provider and register a sender ID (in Nigeria this is required, and approval takes a day or two):
+   - **Africa's Talking** (good for African networks; has a free sandbox)
+   - **Termii** (Nigerian, handles the DND list well)
+   - **Twilio** (familiar, pricier for Nigeria)
+2. Add the settings to the server's `.env`:
+   ```bash
+   SMS_PROVIDER=africastalking    # or termii, twilio
+   SMS_API_KEY=your-api-key       # Twilio: the auth token
+   SMS_SENDER=MaiGuard            # sender id, or the from-number for Twilio
+   SMS_USERNAME=your-at-username  # Africa's Talking only ("sandbox" to test)
+   SMS_ACCOUNT_SID=ACxxxxxxxx     # Twilio only
+   ```
+3. Restart the API. The log shows `[sms] <provider> ready`.
+4. Publish an alert for a road with a member on it, and the text arrives.
+
+Adding another provider means one more entry in `server/src/services/sms.ts`.
+
 ## Demo sign-in
 
 All accounts are fictional.
@@ -205,9 +228,9 @@ Both paths share a single source of truth, the verified alert store, and only a 
 
 ## Left out and next phase
 
-- **Real SMS delivery.** Email and WhatsApp messages are sent for real; text messages are shown in the delivery log but not sent. Next: connect an SMS provider, including rumour checks by text message.
+- **Rumour checks by SMS.** Alerts go out by text, email and WhatsApp, but a rumour can only be checked on the web or WhatsApp. Next: let people text a rumour in and get the answer back by SMS, for phones with no internet.
 - **A real WhatsApp number.** The demo uses Meta's test number, which only replies to registered testers. Next: a real business number anyone can message, plus WhatsApp voice notes from trusted voices.
 - **Scaling the database.** SQLite holds everything on one server, which suits a town. Next: PostgreSQL if MaiGuard ever runs across several servers.
-- **Local languages.** Alerts and rumour checks are in English only. Next: Hausa, Yoruba, Igbo and Pidgin, so reports can be spoken, and alerts and answers read, in the language people use every day.
+- **More languages and dialects.** English, Hausa, Nigerian Pidgin, Yoruba and Igbo are supported. Next: more languages, and a check of the translations by native speakers before a real deployment.
 
 *The town, people and phone numbers in this prototype are fictional.*

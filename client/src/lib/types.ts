@@ -27,6 +27,8 @@ export interface Subscriber {
   email: string | null;
   /** Has messaged MaiGuard on WhatsApp. */
   whatsapp: boolean;
+  /** Language their messages are sent in. */
+  language: string;
   areaIds: string[];
   hasAccount: boolean;
 }
@@ -47,6 +49,7 @@ export interface AlertDraft {
   areaIds: string[];
   urgency: Urgency;
   urgencyReason: string;
+  language: string;
   grounding: { what: Grounding; where: Grounding; action: Grounding };
   engine: AiEngine;
 }
@@ -65,6 +68,8 @@ export interface Alert {
   trustedVoiceId: string;
   createdAt: string;
   resolvedBy?: string;
+  language?: string;
+  translations?: Record<string, { what: string; where: string; action: string }>;
 }
 
 export interface Delivery {
@@ -92,6 +97,7 @@ export interface CheckResponse {
   followUp?: { promised: boolean; message: string };
   reason: string;
   engine: AiEngine;
+  language: string;
 }
 
 export interface Trend {
@@ -114,6 +120,7 @@ export interface Meta {
   engine: AiEngine;
   model: string | null;
   areas: Area[];
+  languages: { code: string; label: string; native: string }[];
   trustedVoices: TrustedVoice[];
 }
 

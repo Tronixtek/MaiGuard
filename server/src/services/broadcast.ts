@@ -1,25 +1,34 @@
 import { store } from "../store.js";
 import { clockTime } from "../lib/text.js";
+import { translateAlert } from "../ai/translate.js";
+import type { Language } from "../lib/languages.js";
 import type { Alert, AlertKind, Delivery, Subscriber } from "../types.js";
 import { sendWhatsAppText } from "./whatsapp.js";
 import { sendEmail } from "./email.js";
+import { sendSms } from "./sms.js";
 
 const KIND_LABEL: Record<AlertKind, string> = { danger: "ALERT", advisory: "NOTICE", all_clear: "ALL CLEAR" };
 
-export function smsBody(alert: Alert): string {
+/** The alert as one message, in the reader's language when a translation exists. */
+export function smsBody(alert: Alert, language: Language = "en"): string {
   const voice = store.trustedVoice(alert.trustedVoiceId);
-  const lines = [`MaiGuard ${KIND_LABEL[alert.kind]} · ${alert.where}`, alert.what];
-  if (alert.action) lines.push(`WHAT TO DO: ${alert.action}`);
+  const t = language === alert.language ? alert : alert.translations?.[language] ?? alert;
+  const lines = [`MaiGuard ${KIND_LABEL[alert.kind]} · ${t.where}`, t.what];
+  if (t.action) lines.push(`WHAT TO DO: ${t.action}`);
   lines.push(`Verified by ${voice?.name ?? "a trusted voice"}${voice ? `, ${voice.role}` : ""} · ${clockTime(alert.createdAt)}`);
   return lines.join("\n");
 }
 
 /**
- * Send one message to every channel a member has given us. SMS is simulated in
- * this prototype; email (SMTP) and WhatsApp are sent for real when configured.
+ * Send one message to every channel a member has given us. Each channel is sent
+ * for real once it is configured (SMS provider, SMTP, WhatsApp) and always
+ * recorded in the delivery log.
  */
 function deliverTo(sub: Subscriber, msg: Pick<Delivery, "body" | "kind" | "urgency" | "alertId">) {
-  if (sub.phone) store.addDelivery({ ...msg, subscriberId: sub.id, channel: "sms", to: sub.phone });
+  if (sub.phone) {
+    store.addDelivery({ ...msg, subscriberId: sub.id, channel: "sms", to: sub.phone });
+    void sendSms(sub.phone, msg.body);
+  }
   if (sub.email) {
     store.addDelivery({ ...msg, subscriberId: sub.id, channel: "email", to: sub.email });
     // The first line of the message ("MaiGuard ALERT · Old Bridge Road") doubles as the subject.
@@ -38,13 +47,14 @@ export type PublishInput = Omit<Alert, "id" | "createdAt" | "status" | "resolved
  * Publish a confirmed alert to the verified store, deliver it to everyone
  * linked to the affected areas, and keep any follow-up promises for those areas.
  */
-export function publishAndDeliver(input: PublishInput) {
-  const alert = store.publishAlert(input);
-  const body = smsBody(alert);
+export async function publishAndDeliver(input: PublishInput) {
+  // Translate first, so everyone is reached in their own language in one go.
+  const translations = await translateAlert(input, input.language ?? "en");
+  const alert = store.publishAlert({ ...input, translations });
 
   const recipients = store.subscribers.filter((s) => s.areaIds.some((id) => alert.areaIds.includes(id)));
   for (const s of recipients) {
-    deliverTo(s, { body, kind: "broadcast", urgency: alert.urgency, alertId: alert.id });
+    deliverTo(s, { body: smsBody(alert, s.language ?? "en"), kind: "broadcast", urgency: alert.urgency, alertId: alert.id });
   }
 
   let followUpsKept = 0;
@@ -54,7 +64,7 @@ export function publishAndDeliver(input: PublishInput) {
     if (!s) continue;
     const check = store.checks.find((c) => c.id === f.checkId);
     deliverTo(s, {
-      body: `MaiGuard UPDATE on what you asked about${check ? ` ("${truncate(check.text, 60)}")` : ""}:\n${body}`,
+      body: `MaiGuard UPDATE on what you asked about${check ? ` ("${truncate(check.text, 60)}")` : ""}:\n${smsBody(alert, s.language ?? "en")}`,
       kind: "follow_up",
       urgency: alert.urgency,
       alertId: alert.id,

@@ -67,6 +67,7 @@ function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [areaIds, setAreaIds] = useState<string[]>([]);
+  const [language, setLanguage] = useState("en");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -75,7 +76,7 @@ function SignUpForm() {
     setLoading(true);
     setError(null);
     try {
-      await signUp({ phone: phone || undefined, email: email || undefined, password, areaIds });
+      await signUp({ phone: phone || undefined, email: email || undefined, password, areaIds, language });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not reach MaiGuard. Check your connection.");
     } finally {
@@ -108,6 +109,9 @@ function SignUpForm() {
         <p className="mb-1.5 text-[13px] font-medium text-ink-soft">Roads you want alerts for</p>
         <AreaPicker value={areaIds} onChange={setAreaIds} areas={meta?.areas ?? []} />
       </div>
+      <Field id="su-language" label="Language" hint="Your alerts come in this language">
+        <LanguagePicker id="su-language" value={language} onChange={setLanguage} />
+      </Field>
       {error && (
         <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
@@ -167,6 +171,7 @@ function MyAccount() {
   const { member, setAreas, signOut } = useMember();
   const { meta, deliveries } = useData();
   const [areaIds, setAreaIds] = useState<string[]>(member!.areaIds);
+  const [language, setLanguage] = useState(member!.language ?? "en");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [messages, setMessages] = useState<Delivery[] | null>(null);
@@ -177,11 +182,11 @@ function MyAccount() {
     api.memberMessages().then(setMessages).catch(() => setMessages([]));
   }, [latestDelivery]);
 
-  const dirty = [...areaIds].sort().join() !== [...member!.areaIds].sort().join();
+  const dirty = [...areaIds].sort().join() !== [...member!.areaIds].sort().join() || language !== (member!.language ?? "en");
   const save = async () => {
     setSaving(true);
     try {
-      await setAreas(areaIds);
+      await setAreas(areaIds, language);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -219,9 +224,15 @@ function MyAccount() {
           </section>
 
           <section className="card">
-            <CardHeader title="Roads" description="You get alerts for these. Roads you check rumours about are added automatically." />
+            <CardHeader title="Roads and language" description="You get alerts for these roads, in this language. Roads you check rumours about are added automatically." />
             <div className="p-5">
               <AreaPicker value={areaIds} onChange={setAreaIds} areas={meta?.areas ?? []} />
+              <div className="mt-4">
+                <label htmlFor="my-language" className="mb-1.5 block text-[13px] font-medium text-ink-soft">
+                  Language
+                </label>
+                <LanguagePicker id="my-language" value={language} onChange={setLanguage} />
+              </div>
               <div className="mt-4 flex items-center justify-end gap-3">
                 {saved && (
                   <span className="inline-flex items-center gap-1 text-xs text-confirmed">
@@ -229,7 +240,7 @@ function MyAccount() {
                   </span>
                 )}
                 <button onClick={save} className="btn-primary" disabled={!dirty || saving}>
-                  {saving && <Spinner />} Save roads
+                  {saving && <Spinner />} Save
                 </button>
               </div>
             </div>
@@ -256,6 +267,21 @@ function MyAccount() {
         </section>
       </div>
     </div>
+  );
+}
+
+function LanguagePicker({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const { meta } = useData();
+  const languages = meta?.languages ?? [{ code: "en", label: "English", native: "English" }];
+  return (
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className="field">
+      {languages.map((l) => (
+        <option key={l.code} value={l.code}>
+          {l.label}
+          {l.native !== l.label ? ` (${l.native})` : ""}
+        </option>
+      ))}
+    </select>
   );
 }
 

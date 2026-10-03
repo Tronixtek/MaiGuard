@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { store } from "../store.js";
 import { clockTime } from "../lib/text.js";
+import { translateText } from "../ai/translate.js";
 import type { CheckResponse } from "../types.js";
 
 /**
@@ -147,7 +148,13 @@ export async function handleMessage(
   } else if (!text || GREETING.test(text)) {
     reply = WELCOME;
   } else {
-    reply = formatReply(await check(text, member));
+    const result = await check(text, member);
+    // Answer in the language they wrote in, and remember it for their alerts.
+    if (result.language !== (member.language ?? "en")) {
+      member.language = result.language;
+      store.touchSubscriber();
+    }
+    reply = await translateText(formatReply(result), result.language);
   }
   await sendWhatsAppText(waId, reply);
   return reply;

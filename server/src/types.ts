@@ -6,6 +6,15 @@ export type Channel = "sms" | "email" | "whatsapp";
 export type DeliveryKind = "broadcast" | "follow_up";
 export type AiEngine = "claude" | "gemini" | "fallback";
 
+import type { Language } from "./lib/languages.js";
+
+/** One alert written in another language: the same three lines, translated. */
+export interface AlertTranslation {
+  what: string;
+  where: string;
+  action: string;
+}
+
 export interface TrustedVoice {
   id: string;
   name: string;
@@ -33,6 +42,8 @@ export interface Subscriber {
   email?: string;
   /** WhatsApp id (international number, digits only) when they have messaged MaiGuard on WhatsApp. */
   whatsapp?: string;
+  /** The language they want messages in. Defaults to English. */
+  language?: Language;
   /** Roads the member lives on, travels through or has asked about; alerts for these reach them. */
   areaIds: string[];
   /** Present only for members who created an account. Never sent to clients. */
@@ -54,6 +65,8 @@ export interface AlertDraft {
   areaIds: string[];
   urgency: Urgency;
   urgencyReason: string;
+  /** The language the trusted voice spoke in. */
+  language: Language;
   grounding: { what: Grounding; where: Grounding; action: Grounding };
   engine: AiEngine;
 }
@@ -72,6 +85,10 @@ export interface Alert {
   trustedVoiceId: string;
   createdAt: string;
   resolvedBy?: string;
+  /** The language the trusted voice spoke in. */
+  language?: Language;
+  /** The alert in the other languages, filled in when it is published. */
+  translations?: Partial<Record<Language, AlertTranslation>>;
 }
 
 export interface Delivery {
@@ -123,4 +140,6 @@ export interface CheckResponse {
   followUp?: { promised: boolean; message: string };
   reason: string;
   engine: AiEngine;
+  /** The language the rumour was written in; replies go back in it. */
+  language: Language;
 }

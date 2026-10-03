@@ -12,6 +12,7 @@ import { whatsapp } from "./whatsapp.js";
 import { checkTrends } from "../services/trends.js";
 import { TOWN_NAME } from "../data/seed.js";
 import { maskEmail, maskPhone, TOWN_TZ, townClock } from "../lib/text.js";
+import { LANGUAGE_CODES, LANGUAGES } from "../lib/languages.js";
 import { clearLoginFailures, issueToken, loginBlocked, recordLoginFailure, requireMember, requireTrustedVoice, verifyLogin } from "../auth.js";
 
 export const api = Router();
@@ -40,6 +41,7 @@ api.get("/meta", (_req, res) => {
     model: activeModel(),
     areas: store.areas,
     trustedVoices: store.trustedVoices,
+    languages: Object.entries(LANGUAGES).map(([code, l]) => ({ code, label: l.label, native: l.native })),
   });
 });
 
@@ -89,18 +91,19 @@ const PublishBody = z.object({
   areaIds: z.array(z.string()).min(1, "Pick at least one affected area."),
   urgency: z.enum(["interrupt", "available"]),
   urgencyReason: z.string().max(300).default(""),
+  language: z.enum(LANGUAGE_CODES).default("en"),
   transcript: z.string().max(4000).default(""),
 });
 
 /** Only a signed-in trusted voice's explicit confirmation writes to the verified store. */
-api.post("/alerts", requireTrustedVoice, (req, res) => {
+api.post("/alerts", requireTrustedVoice, async (req, res) => {
   const body = parse(PublishBody, req, res);
   if (!body) return;
   const unknownArea = body.areaIds.find((id) => !store.area(id));
   if (unknownArea) return void res.status(400).json({ error: `Unknown area: ${unknownArea}` });
 
   // Attributed to whoever is signed in, never to an id supplied by the client.
-  res.status(201).json(publishAndDeliver({ ...body, trustedVoiceId: req.trustedVoice!.id }));
+  res.status(201).json(await publishAndDeliver({ ...body, trustedVoiceId: req.trustedVoice!.id }));
 });
 
 const CheckBody = z.object({

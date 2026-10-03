@@ -20,6 +20,7 @@ export function selfView(s: Subscriber) {
     email: s.email ?? null,
     whatsapp: Boolean(s.whatsapp),
     areaIds: s.areaIds,
+    language: s.language ?? "en",
     hasAccount: Boolean(s.passwordHash),
   };
 }
@@ -32,6 +33,7 @@ export function maskedView(s: Subscriber) {
     email: s.email ? maskEmail(s.email) : null,
     whatsapp: Boolean(s.whatsapp),
     areaIds: s.areaIds,
+    language: s.language ?? "en",
     hasAccount: Boolean(s.passwordHash),
   };
 }

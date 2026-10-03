@@ -53,6 +53,7 @@ export async function checkRumour(text: string, member: Subscriber): Promise<Che
       contact,
       reason: m.reason,
       engine: m.engine,
+      language: m.language,
     };
   } else {
     const nearby = store.alerts.filter((a) => a.status === "active" && a.areaIds.some((id) => m.areaIds.includes(id)));
@@ -82,6 +83,7 @@ export async function checkRumour(text: string, member: Subscriber): Promise<Che
       followUp,
       reason: m.reason,
       engine: m.engine,
+      language: m.language,
     };
   }
 

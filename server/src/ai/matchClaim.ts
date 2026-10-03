@@ -2,6 +2,7 @@ import { z } from "zod";
 import { withFallback } from "./client.js";
 import { store } from "../store.js";
 import { clockTime, findAreas, isDangerTopic, topicOf, TOPICS, type Topic } from "../lib/text.js";
+import { isLanguage, LANGUAGE_CODES, type Language } from "../lib/languages.js";
 import type { AiEngine, Alert, CheckOutcome } from "../types.js";
 
 const MatchSchema = z.object({
@@ -11,6 +12,7 @@ const MatchSchema = z.object({
   topic: z.enum(TOPICS as [Topic, ...Topic[]]),
   claim_summary: z.string().describe("The rumour restated neutrally in a short clause, e.g. 'armed men are at Old Bridge Road'."),
   reason: z.string().describe("One short sentence explaining the outcome, for the trusted voice's log."),
+  language: z.enum(LANGUAGE_CODES).describe("The language the rumour is written in: en, ha (Hausa), pcm (Nigerian Pidgin), yo (Yoruba) or ig (Igbo)."),
 });
 
 type RawMatch = z.infer<typeof MatchSchema>;
@@ -23,11 +25,14 @@ export interface ClaimMatch {
   claimSummary: string;
   reason: string;
   engine: AiEngine;
+  language: Language;
 }
 
 const SYSTEM = `You check rumours for MaiGuard, a community safety service. A resident has forwarded a message they received and wants to know whether to believe it.
 
 You do not decide what is true. You only compare the rumour with the verified alerts below, which are the only things trusted local people have said. Your own knowledge, the rumour's tone and how plausible it sounds do not count as evidence.
+
+Also report which language the rumour is written in.
 
 Choose exactly one outcome:
 - "match": a verified alert that is still active describes the same event in the same place. Give its id.
@@ -87,7 +92,8 @@ export function enforce(raw: RawMatch, text: string, engine: AiEngine): ClaimMat
   }
   if (outcome === "unverified") alert = undefined;
 
-  return { outcome, alert, areaIds, topic: raw.topic, claimSummary: raw.claim_summary, reason, engine };
+  const language = isLanguage(raw.language) ? raw.language : "en";
+  return { outcome, alert, areaIds, topic: raw.topic, claimSummary: raw.claim_summary, reason, engine, language };
 }
 
 export function heuristicMatch(text: string): RawMatch {
@@ -101,7 +107,8 @@ export function heuristicMatch(text: string): RawMatch {
     .replace(/[,.]?\s*is (it|this) true\??$/i, "")
     .replace(/[.!?]+$/, "")
     .slice(0, 140);
-  const base = { claim_area_ids: areaIds, topic, claim_summary: summary };
+  // The rule-based fallback cannot tell languages apart; English is the safe default.
+  const base = { claim_area_ids: areaIds, topic, claim_summary: summary, language: "en" as const };
 
   if (areaIds.length === 0) {
     return { ...base, outcome: "unverified", alert_id: null, reason: "The message does not name a place we can check." };

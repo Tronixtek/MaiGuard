@@ -12,6 +12,7 @@ import {
   verifyPassword,
 } from "../auth.js";
 import { normalizePhone } from "../lib/text.js";
+import { LANGUAGE_CODES } from "../lib/languages.js";
 import { maskedView, messagesFor, selfView } from "../services/members.js";
 import { sendEmail } from "../services/email.js";
 
@@ -53,6 +54,7 @@ const SignupBody = z
     email: emailField.optional().or(z.literal("").transform(() => undefined)),
     password: z.string().min(8, "Use at least 8 characters for your password.").max(200),
     areaIds: z.array(z.string()).default([]),
+    language: z.enum(LANGUAGE_CODES).default("en"),
   })
   .refine((b) => b.phone || b.email, { message: "Enter a phone number, an email, or both." });
 
@@ -77,11 +79,12 @@ members.post("/signup", (req, res) => {
     existing.phone ??= body.phone;
     existing.email ??= body.email;
     existing.passwordHash = hashPassword(body.password);
+    existing.language = body.language;
     store.addAreas(existing, areaIds);
     store.touchSubscriber();
     sub = existing;
   } else {
-    sub = store.addSubscriber({ phone: body.phone, email: body.email, areaIds, passwordHash: hashPassword(body.password) });
+    sub = store.addSubscriber({ phone: body.phone, email: body.email, areaIds, language: body.language, passwordHash: hashPassword(body.password) });
   }
   if (sub.email) {
     const roads = sub.areaIds.map((id) => store.area(id)?.name ?? id);
@@ -117,9 +120,10 @@ members.get("/me", requireMember, (req, res) => {
 });
 
 members.put("/me/areas", requireAccount, (req, res) => {
-  const body = parse(z.object({ areaIds: z.array(z.string()) }), req, res);
+  const body = parse(z.object({ areaIds: z.array(z.string()), language: z.enum(LANGUAGE_CODES).optional() }), req, res);
   if (!body) return;
   req.member!.areaIds = [...new Set(body.areaIds.filter((id) => store.area(id)))];
+  if (body.language) req.member!.language = body.language;
   store.touchSubscriber();
   res.json({ member: selfView(req.member!) });
 });

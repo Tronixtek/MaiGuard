@@ -13,9 +13,9 @@ interface MemberSession {
   hasAccountSession: boolean;
   checking: boolean;
   saveContact: (phone: string) => Promise<void>;
-  signUp: (body: { phone?: string; email?: string; password: string; areaIds: string[] }) => Promise<void>;
+  signUp: (body: { phone?: string; email?: string; password: string; areaIds: string[]; language: string }) => Promise<void>;
   signIn: (identifier: string, password: string) => Promise<void>;
-  setAreas: (areaIds: string[]) => Promise<void>;
+  setAreas: (areaIds: string[], language?: string) => Promise<void>;
   signOut: () => void;
 }
 
@@ -85,8 +85,8 @@ export function MemberProvider({ children }: { children: ReactNode }) {
     const r = await api.memberLogin(identifier, password);
     start(r.token, r.member, true);
   }, [start]);
-  const setAreas = useCallback(async (areaIds: string[]) => {
-    const r = await api.memberSetAreas(areaIds);
+  const setAreas = useCallback(async (areaIds: string[], language?: string) => {
+    const r = await api.memberSetAreas(areaIds, language);
     setMember(r.member);
   }, []);
 
