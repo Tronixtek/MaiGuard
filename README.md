@@ -232,8 +232,11 @@ Both paths share a single source of truth, the verified alert store, and only a 
 ## Left out and next phase
 
 - **Rumour checks by SMS.** Alerts go out by text, email and WhatsApp, but a rumour can only be checked on the web or WhatsApp. Next: let people text a rumour in and get the answer back by SMS, for phones with no internet.
-- **A real WhatsApp number.** The demo uses Meta's test number, which only replies to registered testers. Next: a real business number anyone can message, plus WhatsApp voice notes from trusted voices.
+- **Confirming contacts.** Phone numbers and emails are taken at face value, and there is no password reset. Next: one-time codes by SMS or email.
+- **A real WhatsApp number.** Done: MaiGuard runs on its own number, so anyone can message it. Follow-ups sent more than 24 hours later still need an approved WhatsApp template.
 - **Scaling the database.** SQLite holds everything on one server, which suits a town. Next: PostgreSQL if MaiGuard ever runs across several servers.
 - **More languages and dialects.** English, Hausa, Nigerian Pidgin, Yoruba and Igbo are supported. Next: more languages, and a check of the translations by native speakers before a real deployment.
+
+[ROADMAP.md](ROADMAP.md) has the fuller list: what we would fix before a real community relies on MaiGuard, and what changes if it runs for many towns.
 
 *The town, people and phone numbers in this prototype are fictional.*
