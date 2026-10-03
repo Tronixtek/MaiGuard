@@ -71,7 +71,7 @@ export function seedSubscribers(): Subscriber[] {
     ["+234 802 555 0112", undefined, ["market-road", "riverside"]],
   ];
   const createdAt = new Date().toISOString();
-  return rows.map(([phone, email, areaIds], i) => ({ id: `s-${String(i + 1).padStart(2, "0")}`, phone, email, areaIds, createdAt }));
+  return rows.map(([phone, email, areaIds], i) => ({ id: `s-${String(i + 1).padStart(2, "0")}`, phone, email, areaIds, createdAt, simulated: true }));
 }
 
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();

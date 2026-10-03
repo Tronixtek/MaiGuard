@@ -44,6 +44,8 @@ export interface Subscriber {
   whatsapp?: string;
   /** The language they want messages in. Defaults to English. */
   language?: Language;
+  /** Seeded demo contacts: shown in the delivery log, never really messaged. */
+  simulated?: boolean;
   /** Roads the member lives on, travels through or has asked about; alerts for these reach them. */
   areaIds: string[];
   /** Present only for members who created an account. Never sent to clients. */

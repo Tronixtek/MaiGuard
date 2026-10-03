@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
-const sent: { to: string; subject: string; text: string; from: string }[] = [];
+const sent: { to: string; subject: string; text: string; from: string; html: string; headers: Record<string, string> }[] = [];
 vi.mock("nodemailer", () => ({
   default: {
     createTransport: () => ({
-      sendMail: async (m: { to: string; subject: string; text: string; from: string }) => void sent.push(m),
+      sendMail: async (m: { to: string; subject: string; text: string; from: string; html: string; headers: Record<string, string> }) => void sent.push(m),
       verify: async () => true,
     }),
   },
@@ -44,7 +44,10 @@ describe("email over SMTP", () => {
     await settle();
     const toNorth = sent.filter((m) => m.to === "north@example.com");
     expect(toNorth).toHaveLength(1);
-    expect(toNorth[0]!.subject).toBe("MaiGuard NOTICE · North Gate Road");
+    expect(toNorth[0]!.subject).toBe("MaiGuard Notice · North Gate Road"); // not shouting: filters read capitals as spam
+    expect(toNorth[0]!.html).toContain("Road blocked by a fallen truck.");
+    expect(toNorth[0]!.headers["List-Unsubscribe"]).toContain("https://maiguard.example/account");
+    expect(toNorth[0]!.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
     expect(toNorth[0]!.text).toContain("Road blocked by a fallen truck.");
     expect(toNorth[0]!.text).toContain("https://maiguard.example/account");
     // Seeded contact with an email on another road gets nothing.

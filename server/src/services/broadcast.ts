@@ -25,19 +25,21 @@ export function smsBody(alert: Alert, language: Language = "en"): string {
  * recorded in the delivery log.
  */
 function deliverTo(sub: Subscriber, msg: Pick<Delivery, "body" | "kind" | "urgency" | "alertId">) {
+  // Seeded demo contacts are invented numbers and addresses: log them, never send.
+  const send = !sub.simulated;
   if (sub.phone) {
     store.addDelivery({ ...msg, subscriberId: sub.id, channel: "sms", to: sub.phone });
-    void sendSms(sub.phone, msg.body);
+    if (send) void sendSms(sub.phone, msg.body);
   }
   if (sub.email) {
     store.addDelivery({ ...msg, subscriberId: sub.id, channel: "email", to: sub.email });
     // The first line of the message ("MaiGuard ALERT · Old Bridge Road") doubles as the subject.
     const [subject = "MaiGuard alert", ...rest] = msg.body.split("\n");
-    void sendEmail(sub.email, subject.replace(/:$/, ""), rest.join("\n"));
+    if (send) void sendEmail(sub.email, subject.replace(/:$/, ""), rest.join("\n"));
   }
   if (sub.whatsapp) {
     store.addDelivery({ ...msg, subscriberId: sub.id, channel: "whatsapp", to: `+${sub.whatsapp}` });
-    void sendWhatsAppText(sub.whatsapp, msg.body);
+    if (send) void sendWhatsAppText(sub.whatsapp, msg.body);
   }
 }
 

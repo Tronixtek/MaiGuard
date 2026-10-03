@@ -79,7 +79,7 @@ Everything is optional. The server reads `.env` from the repo root (or `server/.
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN` | Turn on WhatsApp. See [step 6](#6-optional-whatsapp). |
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_API_VERSION` | Optional. The app secret verifies Meta's signature on each webhook; version defaults to `v25.0`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Send email alerts for real. See [step 7](#7-optional-email-alerts-smtp). |
-| `SMS_PROVIDER`, `SMS_API_KEY`, `SMS_SENDER` | Send text messages for real. See [step 8](#8-optional-text-messages-sms). |
+| `SMS_PROVIDER`, `SMS_API_KEY`, `SMS_SENDER` | Send text messages for real: `bulksmslive`, `africastalking`, `termii` or `twilio`. See [step 8](#8-optional-text-messages-sms). |
 | `PUBLIC_APP_URL` | The web app's address, used for the "change your roads" link in emails. |
 | `CORS_ORIGINS` | Comma-separated web origins allowed to call the API when the web app is hosted separately, e.g. `https://your-app.web.app`. |
 | `MAIGUARD_DB` | SQLite file; everything (alerts, members, checks, deliveries) survives restarts. Unset: kept in memory only. The Docker image uses `/app/data/maiguard.db` on a volume. |
@@ -168,19 +168,20 @@ Members who give an email get a welcome email and every alert for their roads by
 3. Restart the API. The log shows `[email] SMTP ready` or the reason it failed.
 4. Test it: create an account with your email and pick a road. You should get the welcome email; publish an alert for that road and it arrives too.
 
-Don't run your own mail server on the VPS for this: mail from a new server IP usually lands in spam. Use a provider's SMTP.
+Two notes on getting mail into inboxes. Don't run your own mail server on the VPS: mail from a new server IP usually lands in spam. And sending from a free Gmail address reaches people, but often in their spam folder, because there is no domain reputation behind it. For reliable delivery, send from your own domain through a provider and set up SPF, DKIM and DMARC. MaiGuard's emails already carry an HTML version, plain-case subjects and one-click unsubscribe headers.
 
 ### 8. Optional: text messages (SMS)
 
 Members with a phone number get alerts by SMS once a provider is set. Without one, texts appear in the delivery log but are not sent.
 
 1. Create an account with a provider and register a sender ID (in Nigeria this is required, and approval takes a day or two):
+   - **BulkSMSLive** (Nigerian, pay as you go)
    - **Africa's Talking** (good for African networks; has a free sandbox)
    - **Termii** (Nigerian, handles the DND list well)
    - **Twilio** (familiar, pricier for Nigeria)
 2. Add the settings to the server's `.env`:
    ```bash
-   SMS_PROVIDER=africastalking    # or termii, twilio
+   SMS_PROVIDER=bulksmslive       # or africastalking, termii, twilio
    SMS_API_KEY=your-api-key       # Twilio: the auth token
    SMS_SENDER=MaiGuard            # sender id, or the from-number for Twilio
    SMS_USERNAME=your-at-username  # Africa's Talking only ("sandbox" to test)
@@ -188,6 +189,8 @@ Members with a phone number get alerts by SMS once a provider is set. Without on
    ```
 3. Restart the API. The log shows `[sms] <provider> ready`.
 4. Publish an alert for a road with a member on it, and the text arrives.
+
+The seeded demo contacts carry invented numbers and `example.com` addresses. They are marked simulated: they appear in the delivery log but are never really messaged, so demo data cannot spend your SMS credit.
 
 Adding another provider means one more entry in `server/src/services/sms.ts`.
 

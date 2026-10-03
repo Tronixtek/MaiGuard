@@ -6,13 +6,13 @@ import { normalizePhone } from "../lib/text.js";
  * delivery log.
  *
  * Env:
- *   SMS_PROVIDER     africastalking | termii | twilio
+ *   SMS_PROVIDER     bulksmslive | africastalking | termii | twilio
  *   SMS_API_KEY      the provider's API key (Twilio: the auth token)
  *   SMS_SENDER       sender id or from-number, as registered with the provider
  *   SMS_USERNAME     Africa's Talking username (use "sandbox" for testing)
  *   SMS_ACCOUNT_SID  Twilio account SID
  */
-export type SmsProvider = "africastalking" | "termii" | "twilio";
+export type SmsProvider = "bulksmslive" | "africastalking" | "termii" | "twilio";
 
 const config = () => ({
   provider: process.env.SMS_PROVIDER?.toLowerCase() as SmsProvider | undefined,
@@ -35,6 +35,19 @@ type Request = { url: string; init: RequestInit };
 function buildRequest(to: string, body: string): Request | undefined {
   const { provider, apiKey, sender, username, accountSid } = config();
   const number = toE164(to);
+
+  if (provider === "bulksmslive") {
+    // https://api.bulksmslive.com/v2/app/sendsms — key in the header, form fields in the body.
+    const form = new URLSearchParams({ message: body, sender_name: sender || "MaiGuard", recipients: number, force_dnd: "1" });
+    return {
+      url: "https://api.bulksmslive.com/v2/app/sendsms",
+      init: {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+        body: form,
+      },
+    };
+  }
 
   if (provider === "africastalking") {
     const form = new URLSearchParams({ username: username || "sandbox", to: number, message: body });
@@ -75,6 +88,16 @@ function buildRequest(to: string, body: string): Request | undefined {
   return undefined;
 }
 
+/** Some providers answer 200 with a failure in the body. */
+function isRejected(body: string): boolean {
+  try {
+    const data = JSON.parse(body) as { status?: number | string; error?: unknown };
+    return data.status !== undefined ? Number(data.status) !== 1 && String(data.status).toLowerCase() !== "success" : Boolean(data.error);
+  } catch {
+    return false;
+  }
+}
+
 /** Send one text message. Never throws: a failed SMS must not block other channels. */
 export async function sendSms(to: string, body: string): Promise<boolean> {
   if (!smsEnabled()) return false;
@@ -85,8 +108,9 @@ export async function sendSms(to: string, body: string): Promise<boolean> {
   }
   try {
     const res = await fetch(request.url, { ...request.init, signal: AbortSignal.timeout(15_000) });
-    if (!res.ok) {
-      console.warn(`[sms] send failed ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const text = await res.text();
+    if (!res.ok || isRejected(text)) {
+      console.warn(`[sms] send failed ${res.status}: ${text.slice(0, 300)}`);
       return false;
     }
     return true;
