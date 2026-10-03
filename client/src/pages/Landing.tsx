@@ -128,7 +128,6 @@ function WhatsAppBand() {
           </a>
           <span className="font-mono text-sm text-ink-soft">{WHATSAPP_NUMBER}</span>
         </div>
-        <p className="mt-3 text-xs text-muted">Prototype: the demo number replies only to phone numbers registered for testing.</p>
       </div>
 
       <div className="rounded-xl bg-[#EFEAE2] p-4" aria-hidden>

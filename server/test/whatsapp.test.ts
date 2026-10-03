@@ -79,3 +79,13 @@ describe("WhatsApp", () => {
     expect(sent[0]!.body).toContain("Not true as told");
   });
 });
+
+describe("WhatsApp notices from Meta", () => {
+  it("ignores WhatsApp's own setup notices instead of answering them", async () => {
+    const notice = "*Continue setting up your account*\n\nGet instructions in *WhatsApp Manager's* new *Setup guidance*: https://business.facebook.com/latest/whatsapp_manager/setup_guidance";
+    await request(app).post("/api/whatsapp/webhook").send(inbound("2347000000000", notice));
+    await new Promise((r) => setTimeout(r, 100));
+    expect(sent).toHaveLength(0);
+    expect(store.checks).toHaveLength(0);
+  });
+});

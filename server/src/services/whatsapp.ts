@@ -55,6 +55,12 @@ export async function sendWhatsAppText(to: string, body: string): Promise<boolea
   }
 }
 
+/**
+ * Meta sends setup and policy notices to the business number itself. They are
+ * not rumours, so they are ignored rather than answered.
+ */
+const META_NOTICE = /(business\.facebook\.com|whatsapp manager|continue setting up your account|your account has been|setup guidance)/i;
+
 const GREETING = /^\s*(hi|hello|hey|hallo|good (morning|afternoon|evening)|start|help|menu|sannu|bawo|ndewo)\b[\s!.]*$/i;
 
 export const WELCOME = [
@@ -132,6 +138,10 @@ export async function handleMessage(
 
   let reply: string;
   const text = msg.type === "text" ? msg.text?.body?.trim() ?? "" : "";
+  if (text && (META_NOTICE.test(text) || waId === process.env.WHATSAPP_DISPLAY_NUMBER?.replace(/\D/g, ""))) {
+    console.log("[whatsapp] ignored a notice from WhatsApp itself");
+    return undefined;
+  }
   if (msg.type !== "text") {
     reply = "Please send the rumour as a text message (you can forward it, or type what you heard and where). Voice notes and photos aren't supported yet.";
   } else if (!text || GREETING.test(text)) {
